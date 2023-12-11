@@ -1,0 +1,271 @@
+//Isabela-sebastian.
+#include <Servo.h>
+Servo servomotor; // Objeto Servo para controlar el servomotor
+
+////////////////////////////////////////////////////////////////////
+
+
+
+
+// Definición pines EnA y EnB para el control de la velocidad
+const int VelocidadMotor1 = 9; // Cambia el valor a 9
+const int VelocidadMotor2 = 10; // Cambia el valor a 10
+
+// Variables para el control de segmentos
+int segmento_actual = 1;
+bool detecto_perpendicular = false;
+
+// Definición de los pines de control de giro de los motores In1, In2, In3 e In4
+const int Motor1A = 4;
+const int Motor1B = 5;
+const int Motor2C = 6;
+const int Motor2D = 7;
+
+// Sensores infrarrojo - izquierdo y derecho
+const int infraPin = 13;
+const int infraPin1 = 12;
+
+// Variables para la captura de los valores: 0 - fondo claro y 1 - línea negra
+int valorInfra = 0;
+int valorInfra1 = 0;
+
+// Variable para llevar un seguimiento de los cruces
+int cruce_actual = 1;
+
+// Pin del sensor de luz
+const int sensorLuzPin = A0;
+
+// Pin del servomotor
+const int servomotorPin = 3;
+const int servomotordejar = 2;
+
+
+// Función para detener el carrito
+void detener_carrito() {
+  // Código para detener el carrito
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor1B, LOW);
+  digitalWrite(Motor2C, LOW);
+  digitalWrite(Motor2D, LOW);
+}
+
+void avanzar() {
+  // Modificamos sentido de giro de los motores
+  digitalWrite(Motor1A, HIGH);
+  digitalWrite(Motor2D, HIGH);
+  delay(25);
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor2D, LOW);
+  delay(20);
+}
+
+void girar_derecha() {
+  // Modificamos sentido de giro de los motores
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor2D, LOW);
+  delay(85);
+  digitalWrite(Motor1A, HIGH);
+  digitalWrite(Motor2D, LOW);
+  delay(80);
+}
+
+void girar_izquierda() {
+  // Modificamos sentido de giro de los motores
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor2D, LOW);
+  delay(85);
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor2D, HIGH);
+  delay(80);
+}
+
+void primer_giro_izquierda() {
+  // Esta función describe el giro cuando encuentra
+  // la primera línea para detenerse
+  // Giro a la derecha durante 0.5 segundos
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor1B, HIGH);
+  digitalWrite(Motor2C, LOW);
+  digitalWrite(Motor2D, HIGH);
+  delay(370);
+  detener_carrito();
+}
+
+void primer_giro_derecha() {
+  digitalWrite(Motor1A, HIGH);
+  digitalWrite(Motor1B, LOW);
+  digitalWrite(Motor2C, HIGH);
+  digitalWrite(Motor2D, LOW);
+  delay(380);
+  detener_carrito();
+}
+
+// Configuración inicial
+void setup() {
+  Serial.begin(9600);
+
+
+
+  delay(1000);
+
+  // Establecemos modo de los pines de los sensores infrarrojo
+  pinMode(infraPin, INPUT);
+  pinMode(infraPin1, INPUT);
+
+  // Establecemos modo de los pines del control de motores
+  pinMode(Motor1A, OUTPUT);
+  pinMode(Motor1B, OUTPUT);
+  pinMode(Motor2C, OUTPUT);
+  pinMode(Motor2D, OUTPUT);
+  pinMode(VelocidadMotor1, OUTPUT);
+  pinMode(VelocidadMotor2, OUTPUT);
+
+  // Configuramos los dos motores a velocidad 150/255
+  analogWrite(VelocidadMotor1, 120);
+  analogWrite(VelocidadMotor2, 120);
+
+  // Configuramos sentido de giro
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor1B, LOW);
+  digitalWrite(Motor2C, LOW);
+  digitalWrite(Motor2D, LOW);
+
+  // Configuramos el pin del servomotor
+  pinMode(servomotorPin, OUTPUT);
+}
+
+// Ejecución contínua
+void loop() {
+  // Leemos el valor del sensor de luz
+  int valorSensorLuz = analogRead(sensorLuzPin);
+
+  // Leemos el valor de los infrarrojos: 0 - fondo claro y 1 - línea negra
+  valorInfra = digitalRead(infraPin);
+  valorInfra1 = digitalRead(infraPin1);
+
+  Serial.println(valorInfra);
+  Serial.println(valorInfra1);
+
+  if (valorInfra == 0 && valorInfra1 == 0) {
+    // Aquí se avanza
+    Serial.println("Ninguno en linea");
+    avanzar();
+  }
+
+  if (valorInfra == 0 && valorInfra1 == 1) {
+    // Aquí se gira a la derecha
+    Serial.println("Derecho en linea");
+    girar_derecha();
+  }
+
+  if (valorInfra == 1 && valorInfra1 == 0) {
+    // Aquí se gira a la izquierda
+    Serial.println("Izquierdo en linea");
+    girar_izquierda();
+  }
+
+  if (valorInfra == 1 && valorInfra1 == 1) {
+    detener_carrito();
+    // Línea detectada
+    Serial.println("Ambos en linea");
+
+      if (segmento_actual == 1) {
+        // Primer segmento, verificar sensor de luz
+        delay(1000);
+        if (valorSensorLuz >= 8 && valorSensorLuz <= 80) {
+          // Cumple la condición, rotar el servomotor
+          servomotor.attach(servomotorPin);
+          servomotor.write(90); // Rotar el servomotor a 90 grados
+          delay(2000);
+          servomotor.write(0);
+          delay(500);
+          servomotor.detach(); // Desconectar el servomotor
+          delay(1000);
+          
+          primer_giro_derecha();
+          delay(1000);
+          segmento_actual = 2;
+
+        } 
+else {
+          // No cumple la condición, girar a la derecha
+          delay(1000);
+          primer_giro_derecha();
+          delay(1000);
+          segmento_actual = 2;
+        }
+  } 
+else if (segmento_actual == 2) {
+        // Estado para avanzar hasta que encuentre una línea negra y actualizar a 3
+        avanzar();
+        if (valorInfra == 1 && valorInfra1 == 1) {
+          // Ignorar la primera línea negra después del giro
+          while (valorInfra == 1 && valorInfra1 == 1) {
+            // Avanzar mientras se sale de la línea negra
+            avanzar();
+
+            valorInfra = digitalRead(infraPin);
+            valorInfra1 = digitalRead(infraPin1);
+          }
+          segmento_actual = 3;
+        }
+
+      } 
+else if (segmento_actual == 3) {
+        // Tercer segmento, verificar sensor de luz
+        delay(1000);
+        if (valorSensorLuz >= 8 && valorSensorLuz <= 80) {
+          // Cumple la condición, rotar el servomotor
+          servomotor.attach(servomotorPin);
+          servomotor.write(90); // Rotar el servomotor a 90 grados
+          servomotor.write(0);
+          delay(500);
+          servomotor.detach(); // Desconectar el servomotor
+          delay(1000);
+          primer_giro_izquierda();
+          delay(1000);
+        
+          segmento_actual = 4;
+
+        } 
+else {
+          delay(1000);
+          // No cumple la condición, girar a la izquierda
+          primer_giro_izquierda();
+          delay(1000);
+        
+          segmento_actual = 4;
+        }
+      } 
+else if (segmento_actual == 4) {
+        // Estado para avanzar hasta que encuentre una línea negra y actualizar a 5
+        avanzar();
+        if (valorInfra == 1 && valorInfra1 == 1) {
+          // Ignorar la primera línea negra después del giro
+          while (valorInfra == 1 && valorInfra1 == 1) {
+            // Avanzar mientras se sale de la línea negra
+            avanzar();
+
+            valorInfra = digitalRead(infraPin);
+            valorInfra1 = digitalRead(infraPin1);
+          }
+          segmento_actual = 5;
+        }
+
+      } 
+else if (segmento_actual == 5) {
+        // Puedes agregar aquí acciones adicionales si es necesario
+        detener_carrito();
+        delay(1000);
+        if (valorSensorLuz >= 8 && valorSensorLuz <= 100) {
+          // Cumple la condición, rotar el servomotor
+          servomotor.attach(servomotordejar);
+          servomotor.write(90); // Rotar el servomotor a 90 grados
+          delay(1000);
+          servomotor.write(0);
+
+        }
+
+      }
+    }
+}
