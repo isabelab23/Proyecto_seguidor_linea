@@ -1,11 +1,9 @@
-//Isabela-sebastian.
-#include <Servo.h>
-Servo servomotor; // Objeto Servo para controlar el servomotor
-
+//Isabela-sebastian.-este
+//#include <Servo.h>
+#include <ServoTimer2.h>  // the servo library
+ServoTimer2 servomotor1; // Objeto Servo para controlar el servomotor
+ServoTimer2 servomotor2;
 ////////////////////////////////////////////////////////////////////
-
-
-
 
 // Definición pines EnA y EnB para el control de la velocidad
 const int VelocidadMotor1 = 9; // Cambia el valor a 9
@@ -36,7 +34,7 @@ int cruce_actual = 1;
 const int sensorLuzPin = A0;
 
 // Pin del servomotor
-const int servomotorPin = 3;
+const int servomotorPin1 = 3;
 const int servomotordejar = 2;
 
 
@@ -56,6 +54,7 @@ void avanzar() {
   delay(25);
   digitalWrite(Motor1A, LOW);
   digitalWrite(Motor2D, LOW);
+  
   delay(20);
 }
 
@@ -96,7 +95,7 @@ void primer_giro_derecha() {
   digitalWrite(Motor1B, LOW);
   digitalWrite(Motor2C, HIGH);
   digitalWrite(Motor2D, LOW);
-  delay(380);
+  delay(370);
   detener_carrito();
 }
 
@@ -131,7 +130,14 @@ void setup() {
   digitalWrite(Motor2D, LOW);
 
   // Configuramos el pin del servomotor
-  pinMode(servomotorPin, OUTPUT);
+  pinMode(servomotorPin1, OUTPUT);
+  pinMode(servomotordejar, OUTPUT);
+  
+  servomotor1.attach(servomotorPin1);
+  servomotor1.write(500);
+  servomotor2.attach(servomotordejar);
+  servomotor2.write(500);
+  delay(1000);
 }
 
 // Ejecución contínua
@@ -150,6 +156,8 @@ void loop() {
     // Aquí se avanza
     Serial.println("Ninguno en linea");
     avanzar();
+    
+    //servomotor1.write(90); // Rotar el servomotor a 90 grados
   }
 
   if (valorInfra == 0 && valorInfra1 == 1) {
@@ -172,16 +180,13 @@ void loop() {
       if (segmento_actual == 1) {
         // Primer segmento, verificar sensor de luz
         delay(1000);
-        if (valorSensorLuz >= 8 && valorSensorLuz <= 80) {
+        if (valorSensorLuz >= 8 && valorSensorLuz <= 100) {
           // Cumple la condición, rotar el servomotor
-          servomotor.attach(servomotorPin);
-          servomotor.write(90); // Rotar el servomotor a 90 grados
-          delay(2000);
-          servomotor.write(0);
-          delay(500);
-          servomotor.detach(); // Desconectar el servomotor
+          //servomotor1.attach(servomotorPin1);
+          servomotor1.write(1500); // Rotar el servomotor a 90 grados
           delay(1000);
-          
+          servomotor1.write(500);
+          delay(1000);
           primer_giro_derecha();
           delay(1000);
           segmento_actual = 2;
@@ -216,12 +221,12 @@ else if (segmento_actual == 3) {
         delay(1000);
         if (valorSensorLuz >= 8 && valorSensorLuz <= 80) {
           // Cumple la condición, rotar el servomotor
-          servomotor.attach(servomotorPin);
-          servomotor.write(90); // Rotar el servomotor a 90 grados
-          servomotor.write(0);
-          delay(500);
-          servomotor.detach(); // Desconectar el servomotor
+          servomotor1.write(1800); // Rotar el servomotor a 90 grados
           delay(1000);
+          servomotor1.write(500);
+          delay(1000);
+          
+          
           primer_giro_izquierda();
           delay(1000);
         
@@ -259,13 +264,13 @@ else if (segmento_actual == 5) {
         delay(1000);
         if (valorSensorLuz >= 8 && valorSensorLuz <= 100) {
           // Cumple la condición, rotar el servomotor
-          servomotor.attach(servomotordejar);
-          servomotor.write(90); // Rotar el servomotor a 90 grados
+          //servomotor.attach(servomotordejar);
+          servomotor2.write(1800); // Rotar el servomotor a 90 grados
           delay(1000);
-          servomotor.write(0);
+          servomotor2.write(500);
 
         }
 
       }
     }
-}
+  }
